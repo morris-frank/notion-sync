@@ -1,4 +1,16 @@
+# Dependencies and generated plugin bundle.
 node_modules/
 main.js
+dist/
+build/
+coverage/
+
+# Local tool state and caches.
+.mise/
+.eslintcache
 *.log
 .DS_Store
+
+# Secrets stay local; .env.example documents the supported surface.
+.env
+.env.local

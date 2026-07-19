@@ -5,11 +5,12 @@ An intentionally opinionated two-way sync between Obsidian notes and one fixed N
 ## Install for development
 
 ```bash
-npm install
-npm run check
+mise run setup
 ```
 
-Copy or symlink this directory into `<vault>/.obsidian/plugins/obsidian-notion-sync`, then enable **Notion Sync** under Community plugins. `npm run dev` watches and rebuilds `main.js`.
+This installs the locked Node/pnpm toolchain and dependencies, installs commit and pre-push hooks, and runs the complete repository gate. Later, use `mise run check`; focused tasks include `mise run lint`, `fmt`, `typecheck`, `test`, and `build`.
+
+Copy or symlink this directory into `<vault>/.obsidian/plugins/obsidian-notion-sync`, then enable **Notion Sync** under Community plugins. `pnpm run dev` watches and rebuilds `main.js`.
 
 Create a Notion integration with read, insert, and update content capabilities. Share the database containing the data source with it. In the plugin settings, enter the integration token and the data source ID (not the database container ID).
 
@@ -70,18 +71,18 @@ The Obsidian filename is authoritative for the Notion title property. A local re
 
 ## Opinionated block mapping
 
-| Obsidian Markdown | Notion block |
-|---|---|
-| `#` through `###` | Heading 1 through 3 |
-| Paragraph | Paragraph |
-| `-` / `*` | Bulleted list item |
-| `1.` | Numbered list item |
-| `- [ ]` / `- [x]` | To-do |
-| `> quote` | Quote |
-| Fenced code | Code |
-| `---` | Divider |
-| `> [!type] Title` | Callout with a stable type-to-emoji mapping |
-| Bold, italic, strike, inline code, Markdown link | Rich-text annotation/link |
+| Obsidian Markdown                                | Notion block                                |
+| ------------------------------------------------ | ------------------------------------------- |
+| `#` through `###`                                | Heading 1 through 3                         |
+| Paragraph                                        | Paragraph                                   |
+| `-` / `*`                                        | Bulleted list item                          |
+| `1.`                                             | Numbered list item                          |
+| `- [ ]` / `- [x]`                                | To-do                                       |
+| `> quote`                                        | Quote                                       |
+| Fenced code                                      | Code                                        |
+| `---`                                            | Divider                                     |
+| `> [!type] Title`                                | Callout with a stable type-to-emoji mapping |
+| Bold, italic, strike, inline code, Markdown link | Rich-text annotation/link                   |
 
 The mapper deliberately does not promise lossless Markdown. Tables, embeds, images, files, bookmarks, equations, columns, child pages/databases, synced blocks, toggles, and other unsupported Notion blocks stop synchronization for that note. This guard matters because a push replaces all page content. Convert or remove an unsupported block explicitly before retrying; the plugin will not silently erase it. Replacement appends and verifies the new write path before trashing the prior top-level blocks, so an interrupted request can leave temporary duplicates but cannot blank the page; the pending marker forces the next run to repair it.
 
