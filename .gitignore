@@ -14,3 +14,4 @@ coverage/
 # Secrets stay local; .env.example documents the supported surface.
 .env
 .env.local
+data.json
