@@ -5,7 +5,7 @@
 1. Obsidian owns initial identity. Only a local note with the configured opt-in property set to `true` may create a Notion page; never add Notion-first discovery implicitly.
 2. Preserve `notion_page_id` as the durable link. Retry partial writes against that page and never create a duplicate merely because content upload failed.
 3. Keep mapping opinionated and explicit. Adding a supported Markdown, callout, property, or Notion block type requires forward and reverse tests plus a documented lossiness boundary.
-4. Prefer recoverable synchronization. Validate outgoing blocks before mutation, append replacement content before trashing prior blocks, and stop on unsupported remote blocks.
+4. Prefer predictable synchronization. Validate outgoing blocks before mutation, use one page-level clear instead of visible per-block deletion, retain the local note and pending marker for retry, and stop on unsupported remote blocks.
 5. Keep the Notion API version deliberate. A version change requires reviewing data-source, block-positioning, and trash semantics and updating API-contract tests.
 6. mise owns tool versions and task entrypoints; pnpm owns Node dependencies. Add dependencies with `pnpm add`, never by editing `pnpm-lock.yaml` manually.
 

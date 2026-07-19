@@ -4,6 +4,7 @@ import { blocksToMarkdown, markdownToBlocks, unsupportedBlocks, validateWritable
 import { NotionApi } from "./notion-api";
 import { frontmatterFromPage, propertiesForPush } from "./property-mapper";
 import { decideExistingPageDirection } from "./sync-decision";
+import { titleForSync } from "./title";
 import type { NoteSnapshot, NotionPage, NotionPropertySchema, NotionSyncSettings, SyncResult } from "./types";
 import { SYNC_FIELDS } from "./types";
 
@@ -102,7 +103,7 @@ export class SyncEngine {
     local: NoteSnapshot,
     schemas: Record<string, NotionPropertySchema>
   ): ReturnType<typeof propertiesForPush> {
-    return propertiesForPush(local.file.basename, local.frontmatter, schemas, this.getSettings());
+    return propertiesForPush(titleForSync(local.file.basename), local.frontmatter, schemas, this.getSettings());
   }
 
   private async createFromLocal(
@@ -133,13 +134,9 @@ export class SyncEngine {
     if (unsupported.length) {
       throw new Error(`Push stopped: Notion page contains protected block type(s): ${unsupported.join(", ")}`);
     }
-    const previousBlockIds = existingBlocks
-      .map((block) => block.id)
-      .filter((id): id is string => typeof id === "string");
-    if (previousBlockIds.length !== existingBlocks.length)
-      throw new Error("Push stopped: Notion returned a block without an ID");
+    const properties = this.pageProperties(local, schemas);
     await this.markPending(local.file);
-    const page = await api.replacePage(remote.id, this.pageProperties(local, schemas), nextBlocks, previousBlockIds);
+    const page = await api.replacePage(remote.id, properties, nextBlocks);
     await this.recordSync(local.file, page, local.hash);
     return { direction: "pushed", message: `${local.file.basename}: pushed to Notion` };
   }

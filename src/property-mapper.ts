@@ -7,9 +7,23 @@ function asArray(value: unknown): unknown[] {
 
 function asText(value: unknown): string {
   if (value == null) return "";
+  if (value instanceof Date) return value.toISOString();
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   return JSON.stringify(value);
+}
+
+function resolveSchema(
+  schemas: Record<string, NotionPropertySchema>,
+  requestedName: string
+): [string, NotionPropertySchema] | undefined {
+  const exact = schemas[requestedName];
+  if (exact) return [requestedName, exact];
+  const normalized = requestedName.toLocaleLowerCase();
+  const matches = Object.entries(schemas).filter(
+    ([name, schema]) => name.toLocaleLowerCase() === normalized || schema.name?.toLocaleLowerCase() === normalized
+  );
+  return matches.length === 1 ? matches[0] : undefined;
 }
 
 export function toNotionProperty(value: unknown, schema: NotionPropertySchema): NotionPropertyValue | null {
@@ -84,16 +98,30 @@ export function propertiesForPush(
   settings: NotionSyncSettings
 ): Record<string, NotionPropertyValue> {
   const output: Record<string, NotionPropertyValue> = {};
-  const titleSchema = schemas[settings.titleProperty];
+  const resolvedTitle = resolveSchema(schemas, settings.titleProperty);
+  const titleSchema = resolvedTitle?.[1];
   if (!titleSchema || titleSchema.type !== "title")
     throw new Error(`Notion title property '${settings.titleProperty}' was not found`);
-  output[settings.titleProperty] = { title: markdownToRichText(title) };
+  output[resolvedTitle[0]] = { title: markdownToRichText(title) };
   for (const key of settings.frontmatterKeys) {
     const notionName = settings.propertyMap[key] ?? key;
-    const schema = schemas[notionName];
-    if (!schema || schema.type === "title") continue;
+    const resolved = resolveSchema(schemas, notionName);
+    if (!resolved) {
+      if (key in frontmatter)
+        throw new Error(
+          `Allowed frontmatter key '${key}' has no matching Notion property; create '${notionName}' or add a property-name mapping`
+        );
+      continue;
+    }
+    const [actualName, schema] = resolved;
+    if (schema.type === "title") continue;
     const mapped = toNotionProperty(frontmatter[key], schema);
-    if (mapped) output[notionName] = mapped;
+    if (!mapped) {
+      if (key in frontmatter)
+        throw new Error(`Notion property '${actualName}' has unsupported type '${schema.type}' for frontmatter sync`);
+      continue;
+    }
+    output[actualName] = mapped;
   }
   return output;
 }
@@ -102,8 +130,11 @@ export function frontmatterFromPage(page: NotionPage, settings: NotionSyncSettin
   const output: Record<string, unknown> = {};
   for (const key of settings.frontmatterKeys) {
     const notionName = settings.propertyMap[key] ?? key;
-    if (notionName === settings.titleProperty) continue;
-    const property = page.properties[notionName];
+    if (notionName.toLocaleLowerCase() === settings.titleProperty.toLocaleLowerCase()) continue;
+    const actualName = Object.keys(page.properties).find(
+      (name) => name.toLocaleLowerCase() === notionName.toLocaleLowerCase()
+    );
+    const property = actualName ? page.properties[actualName] : undefined;
     if (!property) continue;
     const value = fromNotionProperty(property);
     if (value !== undefined) output[key] = value;

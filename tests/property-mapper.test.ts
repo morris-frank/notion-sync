@@ -23,8 +23,7 @@ describe("schema-aware property mapping", () => {
         {
           tags: ["soil", "trial"],
           status: "Draft",
-          date: "2026-07-19",
-          private: "never"
+          date: "2026-07-19"
         },
         schemas,
         settings
@@ -60,5 +59,23 @@ describe("schema-aware property mapping", () => {
       Status: { status: null },
       Date: { date: null }
     });
+  });
+
+  it("matches common Notion property capitalization without an explicit map", () => {
+    const withoutMap = { ...settings, propertyMap: {} };
+    expect(propertiesForPush("Field note", { tags: ["soil"], date: "2026-07-19" }, schemas, withoutMap)).toMatchObject({
+      Tags: { multi_select: [{ name: "soil" }] },
+      Date: { date: { start: "2026-07-19" } }
+    });
+  });
+
+  it("reports a configured property that cannot be synchronized", () => {
+    expect(() =>
+      propertiesForPush("Field note", { owner: "Maurice" }, schemas, {
+        ...settings,
+        frontmatterKeys: ["owner"],
+        propertyMap: {}
+      })
+    ).toThrow("has no matching Notion property");
   });
 });

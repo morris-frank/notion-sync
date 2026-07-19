@@ -65,26 +65,29 @@ The global comma-separated allowlist controls which frontmatter keys participate
 }
 ```
 
-Supported Notion property types are title (filename to the configured title column), rich text, number, checkbox, select, status, multi-select, date, URL, email, and phone number. Read-only and identity-shaped properties such as formula, rollup, people, relation, files, and timestamps are ignored. Values are converted according to the actual data-source schema. Sync metadata never participates in the property filter.
+Supported Notion property types are title (filename to the configured title column), rich text, number, checkbox, select, status, multi-select, date, URL, email, and phone number. Read-only and identity-shaped properties such as formula, rollup, people, relation, files, and timestamps are ignored. Values are converted according to the actual data-source schema. Property lookup is case-insensitive when unambiguous, so `tags` and `date` match conventional Notion properties named `Tags` and `Date`; explicit JSON mappings still win. An allowed frontmatter value with no compatible property now stops the sync with a concrete error instead of disappearing silently. Sync metadata never participates in the property filter.
 
-The Obsidian filename is authoritative for the Notion title property. A local rename is detected by manual sync or polling; changing only the Notion title is not treated as a request to rename the local file.
+The Obsidian filename is authoritative for the Notion title property. An ISO date prefix such as `2026-07-19 ` or `2026-07-19 — ` is deliberately omitted from the Notion title. A local rename is detected by manual sync or polling; changing only the Notion title is not treated as a request to rename the local file.
 
 ## Opinionated block mapping
 
-| Obsidian Markdown                                | Notion block                                |
-| ------------------------------------------------ | ------------------------------------------- |
-| `#` through `###`                                | Heading 1 through 3                         |
-| Paragraph                                        | Paragraph                                   |
-| `-` / `*`                                        | Bulleted list item                          |
-| `1.`                                             | Numbered list item                          |
-| `- [ ]` / `- [x]`                                | To-do                                       |
-| `> quote`                                        | Quote                                       |
-| Fenced code                                      | Code                                        |
-| `---`                                            | Divider                                     |
-| `> [!type] Title`                                | Callout with a stable type-to-emoji mapping |
-| Bold, italic, strike, inline code, Markdown link | Rich-text annotation/link                   |
+| Obsidian Markdown                                | Notion block                                     |
+| ------------------------------------------------ | ------------------------------------------------ |
+| `#` through `###`                                | Heading 1 through 3                              |
+| Paragraph                                        | Paragraph                                        |
+| `-` / `*`                                        | Bulleted list item                               |
+| `1.`                                             | Numbered list item                               |
+| `- [ ]` / `- [x]`                                | To-do                                            |
+| `> quote`                                        | Quote                                            |
+| Fenced code                                      | Code                                             |
+| `---`                                            | Divider                                          |
+| `> [!type] Title`                                | Callout with a stable type-to-emoji mapping      |
+| Markdown pipe table                              | Native Notion table with the first row as header |
+| Bold, italic, strike, inline code, Markdown link | Rich-text annotation/link                        |
 
-The mapper deliberately does not promise lossless Markdown. Tables, embeds, images, files, bookmarks, equations, columns, child pages/databases, synced blocks, toggles, and other unsupported Notion blocks stop synchronization for that note. This guard matters because a push replaces all page content. Convert or remove an unsupported block explicitly before retrying; the plugin will not silently erase it. Replacement appends and verifies the new write path before trashing the prior top-level blocks, so an interrupted request can leave temporary duplicates but cannot blank the page; the pending marker forces the next run to repair it.
+The mapper deliberately does not promise lossless Markdown. Callouts preserve their type as a bold label and map their quoted body into nested Notion blocks, including headings and tables. Pipe tables support inline rich text but not column alignment or multiline cells. Embeds, images, files, bookmarks, equations, columns, child pages/databases, synced blocks, toggles, and other unsupported Notion blocks stop synchronization for that note.
+
+A push prevalidates the complete outgoing document, performs one page-level content clear, then appends the replacement in chunks. This avoids displaying two complete copies and deleting the old blocks one at a time. The page can be briefly empty during the write; if append fails, `notion_sync_pending` keeps the Obsidian note authoritative and forces the next sync to repair the same page.
 
 Nested blocks are read recursively, but the writer currently emits a flat supported block list. Nested content pulled from Notion is represented as indented Markdown and may flatten on the next push.
 

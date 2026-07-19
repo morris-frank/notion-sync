@@ -1,0 +1,8 @@
+# Keep the default detector set; only exempt Obsidian's intentionally local,
+# gitignored plugin settings file. Notion tokens anywhere else remain blocking.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Ignored Obsidian plugin settings contain the configured Notion token"
+paths = ['''^data\.json$''']

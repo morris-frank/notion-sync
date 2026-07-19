@@ -1,5 +1,6 @@
 import { parseYaml } from "obsidian";
 import { contentHash } from "./hash";
+import { titleForSync } from "./title";
 import type { NoteSnapshot, NotionSyncSettings } from "./types";
 import { SYNC_FIELDS } from "./types";
 
@@ -46,7 +47,7 @@ export function makeSnapshot(file: NoteSnapshot["file"], markdown: string, setti
     file,
     body,
     frontmatter,
-    hash: snapshotHash(file.basename, body, frontmatter, settings),
+    hash: snapshotHash(titleForSync(file.basename), body, frontmatter, settings),
     modifiedAt: new Date(file.stat.mtime).toISOString()
   };
 }

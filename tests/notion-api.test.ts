@@ -39,29 +39,25 @@ describe("Notion API write sequencing", () => {
     expect(bodies.map((body) => body.children.length)).toEqual([100, 100, 5]);
   });
 
-  it("appends the replacement before trashing old blocks", async () => {
+  it("bulk-clears once before appending the replacement", async () => {
     requestUrlMock
       .mockResolvedValueOnce(ok({}) as never)
       .mockResolvedValueOnce(ok({}) as never)
-      .mockResolvedValueOnce(ok({}) as never)
-      .mockResolvedValueOnce(ok({}) as never)
       .mockResolvedValueOnce(ok({ id: "page-1", last_edited_time: "2026-07-19T10:00:00Z", properties: {} }) as never);
-    await new NotionApi("secret").replacePage(
-      "page-1",
-      { Name: { title: [] } },
-      [{ type: "paragraph", paragraph: { rich_text: [] } }],
-      ["old-1", "old-2"]
-    );
+    await new NotionApi("secret").replacePage("page-1", { Name: { title: [] } }, [
+      { type: "paragraph", paragraph: { rich_text: [] } }
+    ]);
     expect(
       requestUrlMock.mock.calls.map(
         ([request]) => `${(request as { method: string }).method} ${(request as { url: string }).url}`
       )
     ).toEqual([
-      "PATCH https://api.notion.com/v1/blocks/page-1/children",
       "PATCH https://api.notion.com/v1/pages/page-1",
-      "DELETE https://api.notion.com/v1/blocks/old-1",
-      "DELETE https://api.notion.com/v1/blocks/old-2",
+      "PATCH https://api.notion.com/v1/blocks/page-1/children",
       "GET https://api.notion.com/v1/pages/page-1"
     ]);
+    expect(JSON.parse((requestUrlMock.mock.calls[0]?.[0] as { body: string }).body)).toMatchObject({
+      erase_content: true
+    });
   });
 });

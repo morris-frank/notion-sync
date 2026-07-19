@@ -4,6 +4,10 @@ const CALLOUT_EMOJI: Record<string, string> = {
   note: "📝",
   info: "ℹ️",
   tip: "💡",
+  hint: "💡",
+  summary: "📋",
+  abstract: "📄",
+  todo: "☑️",
   success: "✅",
   question: "❓",
   warning: "⚠️",
@@ -24,24 +28,32 @@ function textObject(content: string, annotations: RichText["annotations"] = {}, 
 }
 
 export function markdownToRichText(markdown: string): RichText[] {
-  const result: RichText[] = [];
-  const pattern = /(`[^`]+`|\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|\*[^*]+\*|_([^_]+)_|\[[^\]]+\]\([^)]+\))/g;
-  let cursor = 0;
-  for (const match of markdown.matchAll(pattern)) {
-    const start = match.index ?? 0;
-    if (start > cursor) result.push(textObject(markdown.slice(cursor, start)));
-    const token = match[0];
-    if (token.startsWith("`")) result.push(textObject(token.slice(1, -1), { code: true }));
-    else if (token.startsWith("**") || token.startsWith("__"))
-      result.push(textObject(token.slice(2, -2), { bold: true }));
-    else if (token.startsWith("~~")) result.push(textObject(token.slice(2, -2), { strikethrough: true }));
-    else if (token.startsWith("[") && token.includes("](")) {
-      const link = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-      result.push(textObject(link?.[1] ?? token, {}, link?.[2]));
-    } else result.push(textObject(token.slice(1, -1), { italic: true }));
-    cursor = start + token.length;
-  }
-  if (cursor < markdown.length) result.push(textObject(markdown.slice(cursor)));
+  const parse = (input: string, inherited: RichText["annotations"] = {}): RichText[] => {
+    const result: RichText[] = [];
+    const pattern = /(\*\*[\s\S]+?\*\*|__[\s\S]+?__|~~[\s\S]+?~~|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*[^*]+\*|_[^_]+_)/g;
+    let cursor = 0;
+    for (const match of input.matchAll(pattern)) {
+      const start = match.index ?? 0;
+      if (start > cursor) result.push(textObject(input.slice(cursor, start), inherited));
+      const token = match[0];
+      if (token.startsWith("**") || token.startsWith("__")) {
+        result.push(...parse(token.slice(2, -2), { ...inherited, bold: true }));
+      } else if (token.startsWith("~~")) {
+        result.push(...parse(token.slice(2, -2), { ...inherited, strikethrough: true }));
+      } else if (token.startsWith("`")) {
+        result.push(textObject(token.slice(1, -1), { ...inherited, code: true }));
+      } else if (token.startsWith("[") && token.includes("](")) {
+        const link = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        result.push(textObject(link?.[1] ?? token, inherited, link?.[2]));
+      } else {
+        result.push(...parse(token.slice(1, -1), { ...inherited, italic: true }));
+      }
+      cursor = start + token.length;
+    }
+    if (cursor < input.length) result.push(textObject(input.slice(cursor), inherited));
+    return result;
+  };
+  const result = parse(markdown);
   const chunked = result.flatMap((item) => {
     const content = item.text?.content ?? "";
     if (!content) return [item];
@@ -173,23 +185,64 @@ function parseCallout(lines: string[], start: number): { block: NotionBlock; end
   const first = lines[start]?.match(/^>\s*\[!([\w-]+)\](?:[+-])?\s*(.*)$/i);
   if (!first) return null;
   const kind = (first[1] ?? "note").toLowerCase();
-  const title = first[2]?.trim() || kind[0]?.toUpperCase() + kind.slice(1);
+  const typeLabel = `${kind[0]?.toUpperCase() ?? ""}${kind.slice(1)}`;
+  const customTitle = first[2]?.trim() ?? "";
+  const label = customTitle ? `${typeLabel} — ${customTitle}` : typeLabel;
   const body: string[] = [];
   let index = start + 1;
   while (index < lines.length && /^>/.test(lines[index] ?? "")) {
     body.push((lines[index] ?? "").replace(/^>\s?/, ""));
     index += 1;
   }
-  const content = body.length ? `${title}\n${body.join("\n")}` : title;
+  const children = markdownToBlocks(body.join("\n"));
   return {
     block: {
       object: "block",
       type: "callout",
       callout: {
-        rich_text: markdownToRichText(content),
+        rich_text: [textObject(label, { bold: true })],
         icon: { type: "emoji", emoji: CALLOUT_EMOJI[kind] ?? CALLOUT_EMOJI.note },
-        color: "default"
+        color: "default",
+        children
       }
+    },
+    end: index
+  };
+}
+
+function splitTableRow(line: string): string[] {
+  const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return trimmed.split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, "|"));
+}
+
+function isTableSeparator(line: string): boolean {
+  const cells = splitTableRow(line);
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function parseTable(lines: string[], start: number): { block: NotionBlock; end: number } | null {
+  const headerLine = lines[start] ?? "";
+  const separatorLine = lines[start + 1] ?? "";
+  if (!headerLine.includes("|") || !isTableSeparator(separatorLine)) return null;
+  const rows: string[][] = [splitTableRow(headerLine)];
+  let index = start + 2;
+  while (index < lines.length && (lines[index] ?? "").includes("|") && (lines[index] ?? "").trim()) {
+    rows.push(splitTableRow(lines[index] ?? ""));
+    index += 1;
+  }
+  const width = Math.max(...rows.map((row) => row.length));
+  const children: NotionBlock[] = rows.map((row) => ({
+    object: "block",
+    type: "table_row",
+    table_row: {
+      cells: Array.from({ length: width }, (_, cellIndex) => markdownToRichText(row[cellIndex] ?? ""))
+    }
+  }));
+  return {
+    block: {
+      object: "block",
+      type: "table",
+      table: { table_width: width, has_column_header: true, has_row_header: false, children }
     },
     end: index
   };
@@ -213,6 +266,13 @@ export function markdownToBlocks(markdown: string): NotionBlock[] {
       flush();
       blocks.push(callout.block);
       index = callout.end;
+      continue;
+    }
+    const table = parseTable(lines, index);
+    if (table) {
+      flush();
+      blocks.push(table.block);
+      index = table.end;
       continue;
     }
     const fence = line.match(/^```([^\s]*)\s*$/);
@@ -246,7 +306,8 @@ export function markdownToBlocks(markdown: string): NotionBlock[] {
     const todo = line.match(/^\s*[-*]\s+\[([ xX])\]\s+(.+)$/);
     if (todo) {
       flush();
-      blocks.push(richTextBlock("to_do", todo[2] ?? "", { checked: todo[1]?.toLowerCase() === "x" }));
+      const todoText = (todo[2] ?? "").replace(/^#{1,3}\s+/, "");
+      blocks.push(richTextBlock("to_do", todoText, { checked: todo[1]?.toLowerCase() === "x" }));
       index += 1;
       continue;
     }
@@ -299,14 +360,22 @@ export const SAFE_REPLACE_BLOCK_TYPES = new Set([
   "quote",
   "code",
   "callout",
-  "divider"
+  "divider",
+  "table",
+  "table_row"
 ]);
+
+function nestedChildren(block: NotionBlock): NotionBlock[] {
+  if (block.children?.length) return block.children;
+  const children = blockData(block).children;
+  return Array.isArray(children) ? (children as NotionBlock[]) : [];
+}
 
 export function unsupportedBlocks(blocks: NotionBlock[]): string[] {
   return [
     ...new Set(
       blocks.flatMap((block) => {
-        const nested = block.children ? unsupportedBlocks(block.children) : [];
+        const nested = unsupportedBlocks(nestedChildren(block));
         return SAFE_REPLACE_BLOCK_TYPES.has(block.type) ? nested : [block.type, ...nested];
       })
     )
@@ -314,7 +383,8 @@ export function unsupportedBlocks(blocks: NotionBlock[]): string[] {
 }
 
 export function validateWritableBlocks(blocks: NotionBlock[]): void {
-  const visit = (block: NotionBlock): void => {
+  const visit = (block: NotionBlock, depth: number): void => {
+    if (depth > 2) throw new Error("Notion only accepts two nested block levels in one append request");
     if (!SAFE_REPLACE_BLOCK_TYPES.has(block.type))
       throw new Error(`Cannot write unsupported block type: ${block.type}`);
     const richText = blockData(block).rich_text;
@@ -326,9 +396,20 @@ export function validateWritableBlocks(blocks: NotionBlock[]): void {
           throw new Error(`A ${block.type} rich-text span exceeds Notion's 2,000-character limit`);
       }
     }
-    block.children?.forEach(visit);
+    const cells = blockData(block).cells;
+    if (Array.isArray(cells)) {
+      for (const cell of cells) {
+        if (!Array.isArray(cell)) throw new Error("A Notion table cell must contain a rich-text array");
+        if (cell.length > 100) throw new Error("A Notion table cell contains more than 100 rich-text spans");
+        for (const item of cell as RichText[]) {
+          if ((item.text?.content ?? "").length > 2000)
+            throw new Error("A Notion table cell rich-text span exceeds the 2,000-character limit");
+        }
+      }
+    }
+    nestedChildren(block).forEach((child) => visit(child, depth + 1));
   };
-  blocks.forEach(visit);
+  blocks.forEach((block) => visit(block, 1));
 }
 
 export function blocksToMarkdown(blocks: NotionBlock[]): string {
@@ -369,20 +450,46 @@ export function blocksToMarkdown(blocks: NotionBlock[]): string {
         break;
       case "callout": {
         const icon = data.icon as { emoji?: string } | undefined;
-        const kind = EMOJI_CALLOUT[icon?.emoji ?? ""] ?? "note";
-        const [title, ...body] = text.split("\n");
-        output.push([`> [!${kind}] ${title ?? ""}`, ...body.map((line) => `> ${line}`)].join("\n"));
+        const richText = Array.isArray(data.rich_text) ? (data.rich_text as RichText[]) : [];
+        const label = richText.map((item) => item.plain_text ?? item.text?.content ?? "").join("");
+        const [labelType = "", customTitle] = label.split(" — ", 2);
+        const labelledKind = labelType.toLowerCase();
+        const kind = labelledKind in CALLOUT_EMOJI ? labelledKind : (EMOJI_CALLOUT[icon?.emoji ?? ""] ?? "note");
+        const inferredTitle = labelledKind in CALLOUT_EMOJI ? customTitle : label;
+        const header = `> [!${kind}]${inferredTitle ? ` ${inferredTitle}` : ""}`;
+        const body = blocksToMarkdown(nestedChildren(block)).trimEnd();
+        output.push(body ? [header, ...body.split("\n").map((line) => (line ? `> ${line}` : ">"))].join("\n") : header);
         break;
       }
+      case "table": {
+        const rows = nestedChildren(block)
+          .filter((child) => child.type === "table_row")
+          .map((child) => {
+            const cells = blockData(child).cells;
+            return Array.isArray(cells)
+              ? cells.map((cell) =>
+                  richTextToMarkdown(Array.isArray(cell) ? (cell as RichText[]) : []).replace(/\|/g, "\\|")
+                )
+              : [];
+          });
+        const width = Number(data.table_width) || Math.max(1, ...rows.map((row) => row.length));
+        const hasHeader = data.has_column_header !== false;
+        const header = hasHeader && rows.length ? (rows[0] ?? []) : Array.from({ length: width }, () => "");
+        const bodyRows = hasHeader ? rows.slice(1) : rows;
+        const renderRow = (row: string[]): string =>
+          `| ${Array.from({ length: width }, (_, index) => row[index] ?? "").join(" | ")} |`;
+        output.push(
+          [renderRow(header), renderRow(Array.from({ length: width }, () => "---")), ...bodyRows.map(renderRow)].join(
+            "\n"
+          )
+        );
+        break;
+      }
+      case "table_row":
+        break;
       default:
         output.push(`<!-- notion-sync: unsupported ${block.type} block omitted -->`);
     }
-    if (block.children?.length)
-      output.push(
-        ...blocksToMarkdown(block.children)
-          .split("\n")
-          .map((line) => `  ${line}`)
-      );
   }
   return output.join("\n\n").trimEnd() + (output.length ? "\n" : "");
 }

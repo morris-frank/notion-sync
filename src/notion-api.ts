@@ -75,12 +75,10 @@ export class NotionApi {
   async replacePage(
     pageId: string,
     properties: Record<string, NotionPropertyValue>,
-    children: NotionBlock[],
-    previousBlockIds: string[]
+    children: NotionBlock[]
   ): Promise<NotionPage> {
+    await this.request<NotionPage>(`/pages/${pageId}`, "PATCH", { properties, erase_content: true });
     await this.appendBlocks(pageId, children);
-    await this.request<NotionPage>(`/pages/${pageId}`, "PATCH", { properties });
-    for (const blockId of previousBlockIds) await this.request(`/blocks/${blockId}`, "DELETE");
     return this.retrievePage(pageId);
   }
 }
