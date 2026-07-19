@@ -42,6 +42,8 @@ During initial creation, `notion_sync_pending: true` may appear briefly. If cont
 
 The returned `notion_page_id` is the identity from then on. Removing it creates a new Notion page on the next sync; do not remove it to relink a page. Setting `notion_sync: false` pauses both directions without deleting anything.
 
+To permanently unlink the local note, run **Notion Sync: Remove Notion sync from current note**. This removes the configured opt-in property and all `notion_*` sync metadata written by the plugin. It leaves mapped user frontmatter such as `date`, `tags`, and `status` intact and does not delete or change the Notion page.
+
 ## Two-way behavior
 
 - A local-only change pushes the note body and allowed frontmatter properties.

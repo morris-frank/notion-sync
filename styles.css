@@ -1,3 +1,8 @@
+.notion-sync-status {
+  max-width: min(24rem, 40vw);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .notion-sync-status-error {
   color: var(--text-error);
 }

@@ -21,6 +21,27 @@ export function isOptedIn(frontmatter: Record<string, unknown>, settings: Notion
   return frontmatter[settings.optInProperty] === true;
 }
 
+function syncFrontmatterKeys(settings: NotionSyncSettings): string[] {
+  return [...new Set([settings.optInProperty, ...Object.values(SYNC_FIELDS)])];
+}
+
+export function hasSyncFrontmatter(
+  frontmatter: Record<string, unknown> | undefined,
+  settings: NotionSyncSettings
+): boolean {
+  return frontmatter !== undefined && syncFrontmatterKeys(settings).some((key) => key in frontmatter);
+}
+
+export function removeSyncFrontmatter(frontmatter: Record<string, unknown>, settings: NotionSyncSettings): string[] {
+  const removed: string[] = [];
+  for (const key of syncFrontmatterKeys(settings)) {
+    if (!(key in frontmatter)) continue;
+    delete frontmatter[key];
+    removed.push(key);
+  }
+  return removed;
+}
+
 export function selectedFrontmatter(
   frontmatter: Record<string, unknown>,
   settings: NotionSyncSettings

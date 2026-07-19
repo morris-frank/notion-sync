@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS, type NotionSyncSettings } from "./types";
 import { NotionApi } from "./notion-api";
 import { NotionSyncSettingTab } from "./settings";
 import { SyncEngine } from "./sync-engine";
+import { hasSyncFrontmatter, removeSyncFrontmatter } from "./frontmatter";
 
 export default class NotionSyncPlugin extends Plugin {
   override settings: NotionSyncSettings = DEFAULT_SETTINGS;
@@ -14,6 +15,7 @@ export default class NotionSyncPlugin extends Plugin {
   override async onload(): Promise<void> {
     await this.loadSettings();
     this.statusEl = this.addStatusBarItem();
+    this.statusEl.addClass("notion-sync-status");
     this.setStatus("Notion Sync ready");
     this.engine = new SyncEngine(
       this.app,
@@ -49,6 +51,19 @@ export default class NotionSyncPlugin extends Plugin {
           : undefined;
         if (typeof url !== "string") return false;
         if (!checking) window.open(url);
+        return true;
+      }
+    });
+    this.addCommand({
+      id: "remove-notion-sync-current-note",
+      name: "Remove Notion sync from current note",
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== "md" || this.engine.isBusy(file.path)) return false;
+        const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter as
+          Record<string, unknown> | undefined;
+        if (!hasSyncFrontmatter(frontmatter, this.settings)) return false;
+        if (!checking) void this.removeNotionSync(file);
         return true;
       }
     });
@@ -117,6 +132,21 @@ export default class NotionSyncPlugin extends Plugin {
     this.statusEl.setText(message);
     this.statusEl.toggleClass("notion-sync-status-error", error);
     this.statusEl.setAttribute("aria-label", message);
+  }
+
+  private async removeNotionSync(file: TFile): Promise<void> {
+    try {
+      await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+        removeSyncFrontmatter(frontmatter, this.settings);
+      });
+      const message = `${file.basename}: removed Notion sync metadata`;
+      this.setStatus(message);
+      new Notice(message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.setStatus(`Failed to remove Notion sync: ${message}`, true);
+      new Notice(`Notion Sync: ${message}`, 8000);
+    }
   }
 
   async testConnection(): Promise<void> {
