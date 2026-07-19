@@ -1,0 +1,9 @@
+{
+  "id": "obsidian-notion-sync",
+  "name": "Notion Sync",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Opinionated two-way sync from opted-in Obsidian notes to one Notion data source.",
+  "author": "Soilytix",
+  "isDesktopOnly": false
+}
