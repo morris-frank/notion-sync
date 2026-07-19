@@ -1,0 +1,4 @@
+# pnpm 10+ blocks dependency lifecycle scripts unless explicitly approved.
+# esbuild's installer selects and verifies the native binary used by the bundle.
+onlyBuiltDependencies:
+  - esbuild

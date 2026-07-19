@@ -1,0 +1,50 @@
+# prek reads this file. Local hooks call mise-managed/project-locked binaries,
+# so versions are not duplicated between hooks and CI.
+default_stages: [pre-commit]
+
+repos:
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: pnpm exec prettier --write
+        language: system
+        files: \.(?:[cm]?[jt]sx?|json|ya?ml|md|css)$
+        exclude: ^(?:main\.js|pnpm-lock\.yaml|mise\.lock)$
+
+      - id: eslint
+        name: eslint
+        entry: pnpm exec eslint --fix
+        language: system
+        files: \.[cm]?[jt]sx?$
+
+      - id: typecheck
+        name: TypeScript typecheck
+        entry: mise run typecheck
+        language: system
+        pass_filenames: false
+
+      - id: gitleaks
+        name: gitleaks (staged secret scan)
+        entry: gitleaks git --staged --redact --verbose
+        language: system
+        pass_filenames: false
+
+      # Push runs only tests; commit hooks already cover static checks.
+      - id: tests
+        name: tests before push
+        entry: mise run test
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files

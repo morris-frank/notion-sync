@@ -1,0 +1,75 @@
+# mise is the single source of truth for the repository toolchain.
+# Exact resolved versions are recorded in mise.lock and committed.
+min_version = "2026.6.1"
+
+[settings]
+# Reproducible local and CI tool versions come from the generated lockfile.
+lockfile = true
+
+[tools]
+# Obsidian's build is pure Node; no Python toolchain is needed here.
+node = "26.3.1"
+pnpm = "10.34.5"
+prek = "0.4.5"                       # pre-1.0: fast Rust pre-commit runner
+gitleaks = "8.30.1"                  # staged and whole-tree secret scanning
+"aqua:google/osv-scanner" = "2.4.0" # scans pnpm-lock.yaml for known vulnerabilities
+
+[env]
+# Local credentials/config are loaded consistently but never committed.
+_.file = [".env", ".env.local"]
+
+# ---- Tasks: run with `mise run <name>` ----
+
+[tasks.setup]
+description = "Cold start: install tools and locked dependencies, install hooks, then verify"
+run = [
+  "mise install",
+  "pnpm install --frozen-lockfile",
+  "prek install",
+  "prek install -t pre-push",
+  "mise run check",
+]
+
+[tasks.install]
+description = "Install locked dependencies and repository hooks without running verification"
+run = [
+  "pnpm install --frozen-lockfile",
+  "prek install",
+  "prek install -t pre-push",
+]
+
+[tasks.lint]
+description = "Lint TypeScript and JavaScript"
+run = "pnpm run lint"
+
+[tasks.fmt]
+description = "Format supported source and configuration files"
+run = "pnpm run fmt"
+
+[tasks.typecheck]
+description = "Type-check without emitting JavaScript"
+run = "pnpm run typecheck"
+
+[tasks.test]
+description = "Run the deterministic unit and API-contract tests"
+run = "pnpm run test"
+
+[tasks.build]
+description = "Type-check and build the production Obsidian plugin bundle"
+run = "pnpm run build"
+
+[tasks.check]
+description = "Definition of done: whole-repo hooks, tests, and production build"
+run = ["prek run --all-files", "mise run test", "mise run build"]
+
+[tasks.hooks]
+description = "Run all commit-stage prek hooks against the whole repository"
+run = "prek run --all-files"
+
+[tasks.audit]
+description = "Scan the pnpm lockfile for known dependency vulnerabilities"
+run = "osv-scanner scan source --lockfile pnpm-lock.yaml"
+
+[tasks.secrets]
+description = "Scan the working tree for committed secrets"
+run = "gitleaks dir . --redact --verbose"

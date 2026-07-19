@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install the exact toolchain resolved from mise.toml/mise.lock.
+      - uses: jdx/mise-action@v2
+        with:
+          cache: true
+
+      # Never resolve new packages in CI; the committed lockfile is authoritative.
+      - name: Install dependencies (frozen)
+        run: pnpm install --frozen-lockfile
+
+      # The same whole-repo definition of done used locally.
+      - name: Check
+        run: mise run check
+
+      # Backstops beyond the fast staged secret hook and regular code gate.
+      - name: Secret scan
+        run: mise run secrets
+
+      - name: Dependency audit
+        run: mise run audit
