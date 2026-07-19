@@ -2,7 +2,11 @@ import { requestUrl } from "obsidian";
 import type { NotionBlock, NotionPage, NotionPropertySchema, NotionPropertyValue } from "./types";
 import { NOTION_API_VERSION } from "./types";
 
-interface ListResponse<T> { results: T[]; has_more: boolean; next_cursor: string | null; }
+interface ListResponse<T> {
+  results: T[];
+  has_more: boolean;
+  next_cursor: string | null;
+}
 
 export class NotionApi {
   constructor(private readonly token: string) {}
@@ -21,14 +25,17 @@ export class NotionApi {
       throw: false
     });
     if (response.status < 200 || response.status >= 300) {
-      const message = (response.json as { message?: string } | undefined)?.message ?? response.text ?? `HTTP ${response.status}`;
+      const message =
+        (response.json as { message?: string } | undefined)?.message ?? response.text ?? `HTTP ${response.status}`;
       throw new Error(`Notion API: ${message}`);
     }
     return response.json as T;
   }
 
   async retrieveDataSource(dataSourceId: string): Promise<Record<string, NotionPropertySchema>> {
-    const source = await this.request<{ properties: Record<string, NotionPropertySchema> }>(`/data_sources/${dataSourceId}`);
+    const source = await this.request<{ properties: Record<string, NotionPropertySchema> }>(
+      `/data_sources/${dataSourceId}`
+    );
     return source.properties;
   }
 

@@ -14,39 +14,66 @@ function asText(value: unknown): string {
 
 export function toNotionProperty(value: unknown, schema: NotionPropertySchema): NotionPropertyValue | null {
   switch (schema.type) {
-    case "title": return { title: markdownToRichText(asText(value)) };
-    case "rich_text": return { rich_text: markdownToRichText(asText(value)) };
+    case "title":
+      return { title: markdownToRichText(asText(value)) };
+    case "rich_text":
+      return { rich_text: markdownToRichText(asText(value)) };
     case "number": {
       const parsed = typeof value === "number" ? value : Number(value);
       return { number: Number.isFinite(parsed) ? parsed : null };
     }
-    case "checkbox": return { checkbox: Boolean(value) };
-    case "select": return { select: value == null || value === "" ? null : { name: asText(value) } };
-    case "status": return { status: value == null || value === "" ? null : { name: asText(value) } };
-    case "multi_select": return { multi_select: asArray(value).map((item) => ({ name: asText(item) })).filter((item) => item.name) };
-    case "date": return { date: value == null || value === "" ? null : { start: asText(value) } };
-    case "url": return { url: value == null || value === "" ? null : asText(value) };
-    case "email": return { email: value == null || value === "" ? null : asText(value) };
-    case "phone_number": return { phone_number: value == null || value === "" ? null : asText(value) };
-    default: return null;
+    case "checkbox":
+      return { checkbox: Boolean(value) };
+    case "select":
+      return { select: value == null || value === "" ? null : { name: asText(value) } };
+    case "status":
+      return { status: value == null || value === "" ? null : { name: asText(value) } };
+    case "multi_select":
+      return {
+        multi_select: asArray(value)
+          .map((item) => ({ name: asText(item) }))
+          .filter((item) => item.name)
+      };
+    case "date":
+      return { date: value == null || value === "" ? null : { start: asText(value) } };
+    case "url":
+      return { url: value == null || value === "" ? null : asText(value) };
+    case "email":
+      return { email: value == null || value === "" ? null : asText(value) };
+    case "phone_number":
+      return { phone_number: value == null || value === "" ? null : asText(value) };
+    default:
+      return null;
   }
 }
 
 export function fromNotionProperty(property: NotionPropertyValue): unknown {
   const type = property.type;
   switch (type) {
-    case "title": return richTextToMarkdown((property.title as RichText[]) ?? []);
-    case "rich_text": return richTextToMarkdown((property.rich_text as RichText[]) ?? []);
-    case "number": return property.number ?? null;
-    case "checkbox": return Boolean(property.checkbox);
-    case "select": return (property.select as { name?: string } | null)?.name ?? null;
-    case "status": return (property.status as { name?: string } | null)?.name ?? null;
-    case "multi_select": return ((property.multi_select as { name: string }[]) ?? []).map((item) => item.name);
-    case "date": return (property.date as { start?: string } | null)?.start ?? null;
-    case "url": return property.url ?? null;
-    case "email": return property.email ?? null;
-    case "phone_number": return property.phone_number ?? null;
-    default: return undefined;
+    case "title":
+      return richTextToMarkdown((property.title as RichText[]) ?? []);
+    case "rich_text":
+      return richTextToMarkdown((property.rich_text as RichText[]) ?? []);
+    case "number":
+      return property.number ?? null;
+    case "checkbox":
+      return Boolean(property.checkbox);
+    case "select":
+      return (property.select as { name?: string } | null)?.name ?? null;
+    case "status":
+      return (property.status as { name?: string } | null)?.name ?? null;
+    case "multi_select":
+      return ((property.multi_select as { name: string }[]) ?? []).map((item) => item.name);
+    case "date":
+      return (property.date as { start?: string } | null)?.start ?? null;
+    case "url":
+      return property.url ?? null;
+    case "email":
+      return property.email ?? null;
+    case "phone_number":
+      return property.phone_number ?? null;
+    default:
+      return undefined;
   }
 }
 
@@ -58,7 +85,8 @@ export function propertiesForPush(
 ): Record<string, NotionPropertyValue> {
   const output: Record<string, NotionPropertyValue> = {};
   const titleSchema = schemas[settings.titleProperty];
-  if (!titleSchema || titleSchema.type !== "title") throw new Error(`Notion title property '${settings.titleProperty}' was not found`);
+  if (!titleSchema || titleSchema.type !== "title")
+    throw new Error(`Notion title property '${settings.titleProperty}' was not found`);
   output[settings.titleProperty] = { title: markdownToRichText(title) };
   for (const key of settings.frontmatterKeys) {
     const notionName = settings.propertyMap[key] ?? key;

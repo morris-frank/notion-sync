@@ -18,10 +18,14 @@ describe("two-way sync decision", () => {
 
   it("uses the newest edit when both sides changed", () => {
     expect(decideExistingPageDirection({ ...base, localChanged: true, remoteChanged: true })).toBe("push");
-    expect(decideExistingPageDirection({
-      ...base, localChanged: true, remoteChanged: true,
-      localModifiedAt: "2026-07-19T08:00:00Z"
-    })).toBe("pull");
+    expect(
+      decideExistingPageDirection({
+        ...base,
+        localChanged: true,
+        remoteChanged: true,
+        localModifiedAt: "2026-07-19T08:00:00Z"
+      })
+    ).toBe("pull");
   });
 
   it("always repairs an incompletely-created linked page from Obsidian", () => {

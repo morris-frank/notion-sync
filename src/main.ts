@@ -15,7 +15,11 @@ export default class NotionSyncPlugin extends Plugin {
     await this.loadSettings();
     this.statusEl = this.addStatusBarItem();
     this.setStatus("Notion Sync ready");
-    this.engine = new SyncEngine(this.app, () => this.settings, (message, error) => this.setStatus(message, error));
+    this.engine = new SyncEngine(
+      this.app,
+      () => this.settings,
+      (message, error) => this.setStatus(message, error)
+    );
     this.addSettingTab(new NotionSyncSettingTab(this.app, this));
 
     this.addCommand({
@@ -28,26 +32,44 @@ export default class NotionSyncPlugin extends Plugin {
         return true;
       }
     });
-    this.addCommand({ id: "sync-all-notes", name: "Sync all opted-in notes", callback: () => { void this.engine.syncAll(); } });
+    this.addCommand({
+      id: "sync-all-notes",
+      name: "Sync all opted-in notes",
+      callback: () => {
+        void this.engine.syncAll();
+      }
+    });
     this.addCommand({
       id: "open-linked-notion-page",
       name: "Open linked Notion page",
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
-        const url = file ? this.app.metadataCache.getFileCache(file)?.frontmatter?.notion_page_url as unknown : undefined;
+        const url = file
+          ? (this.app.metadataCache.getFileCache(file)?.frontmatter?.notion_page_url as unknown)
+          : undefined;
         if (typeof url !== "string") return false;
         if (!checking) window.open(url);
         return true;
       }
     });
 
-    this.registerEvent(this.app.vault.on("modify", (file) => {
-      if (!(file instanceof TFile) || file.extension !== "md" || !this.settings.pushOnSave || this.engine.isBusy(file.path)) return;
-      this.scheduleFileSync(file);
-    }));
-    this.registerEvent(this.app.vault.on("rename", (file) => {
-      if (file instanceof TFile && file.extension === "md" && this.settings.pushOnSave) this.scheduleFileSync(file);
-    }));
+    this.registerEvent(
+      this.app.vault.on("modify", (file) => {
+        if (
+          !(file instanceof TFile) ||
+          file.extension !== "md" ||
+          !this.settings.pushOnSave ||
+          this.engine.isBusy(file.path)
+        )
+          return;
+        this.scheduleFileSync(file);
+      })
+    );
+    this.registerEvent(
+      this.app.vault.on("rename", (file) => {
+        if (file instanceof TFile && file.extension === "md" && this.settings.pushOnSave) this.scheduleFileSync(file);
+      })
+    );
     this.configurePolling();
   }
 
@@ -58,7 +80,7 @@ export default class NotionSyncPlugin extends Plugin {
   }
 
   private async loadSettings(): Promise<void> {
-    const stored = await this.loadData() as Partial<NotionSyncSettings> | null;
+    const stored = (await this.loadData()) as Partial<NotionSyncSettings> | null;
     this.settings = { ...DEFAULT_SETTINGS, ...(stored ?? {}) };
   }
 
@@ -73,7 +95,9 @@ export default class NotionSyncPlugin extends Plugin {
     this.pollTimer = null;
     const minutes = this.settings.pollIntervalMinutes;
     if (minutes > 0) {
-      this.pollTimer = window.setInterval(() => { void this.engine.syncAll(false); }, minutes * 60_000);
+      this.pollTimer = window.setInterval(() => {
+        void this.engine.syncAll(false);
+      }, minutes * 60_000);
       this.registerInterval(this.pollTimer);
     }
   }

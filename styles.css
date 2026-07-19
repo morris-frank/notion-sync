@@ -1,3 +1,10 @@
-.notion-sync-status-error { color: var(--text-error); }
-.notion-sync-status-working { color: var(--text-accent); }
-.notion-sync-setting textarea { min-height: 7rem; width: 100%; }
+.notion-sync-status-error {
+  color: var(--text-error);
+}
+.notion-sync-status-working {
+  color: var(--text-accent);
+}
+.notion-sync-setting textarea {
+  min-height: 7rem;
+  width: 100%;
+}

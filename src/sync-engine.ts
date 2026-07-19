@@ -24,9 +24,13 @@ export class SyncEngine {
     private readonly setStatus: StatusCallback
   ) {}
 
-  isBusy(path: string): boolean { return this.activeFiles.has(path); }
+  isBusy(path: string): boolean {
+    return this.activeFiles.has(path);
+  }
 
-  private api(): NotionApi { return new NotionApi(this.getSettings().notionToken); }
+  private api(): NotionApi {
+    return new NotionApi(this.getSettings().notionToken);
+  }
 
   private async getSchemas(api: NotionApi): Promise<Record<string, NotionPropertySchema>> {
     const id = this.getSettings().dataSourceId.trim();
@@ -38,7 +42,9 @@ export class SyncEngine {
     return this.schemas;
   }
 
-  invalidateConfiguration(): void { this.schemas = null; }
+  invalidateConfiguration(): void {
+    this.schemas = null;
+  }
 
   private async readSnapshot(file: TFile): Promise<NoteSnapshot> {
     return makeSnapshot(file, await this.app.vault.read(file), this.getSettings());
@@ -68,7 +74,7 @@ export class SyncEngine {
   }
 
   private async syncSnapshot(local: NoteSnapshot): Promise<SyncResult> {
-    const settings = this.getSettings();
+    // const settings = this.getSettings();
     const api = this.api();
     const schemas = await this.getSchemas(api);
     const pageId = asString(local.frontmatter[SYNC_FIELDS.pageId]);
@@ -82,7 +88,8 @@ export class SyncEngine {
     const remoteChanged = !lastRemoteEdit || remote.last_edited_time !== lastRemoteEdit;
     const direction = decideExistingPageDirection({
       pending: local.frontmatter[SYNC_FIELDS.pending] === true,
-      localChanged, remoteChanged,
+      localChanged,
+      remoteChanged,
       localModifiedAt: local.modifiedAt,
       remoteEditedAt: remote.last_edited_time
     });
@@ -91,7 +98,10 @@ export class SyncEngine {
     return { direction: "unchanged", message: `${local.file.basename}: up to date` };
   }
 
-  private pageProperties(local: NoteSnapshot, schemas: Record<string, NotionPropertySchema>): ReturnType<typeof propertiesForPush> {
+  private pageProperties(
+    local: NoteSnapshot,
+    schemas: Record<string, NotionPropertySchema>
+  ): ReturnType<typeof propertiesForPush> {
     return propertiesForPush(local.file.basename, local.frontmatter, schemas, this.getSettings());
   }
 
@@ -123,8 +133,11 @@ export class SyncEngine {
     if (unsupported.length) {
       throw new Error(`Push stopped: Notion page contains protected block type(s): ${unsupported.join(", ")}`);
     }
-    const previousBlockIds = existingBlocks.map((block) => block.id).filter((id): id is string => typeof id === "string");
-    if (previousBlockIds.length !== existingBlocks.length) throw new Error("Push stopped: Notion returned a block without an ID");
+    const previousBlockIds = existingBlocks
+      .map((block) => block.id)
+      .filter((id): id is string => typeof id === "string");
+    if (previousBlockIds.length !== existingBlocks.length)
+      throw new Error("Push stopped: Notion returned a block without an ID");
     await this.markPending(local.file);
     const page = await api.replacePage(remote.id, this.pageProperties(local, schemas), nextBlocks, previousBlockIds);
     await this.recordSync(local.file, page, local.hash);
@@ -201,11 +214,16 @@ export class SyncEngine {
     for (const file of files) {
       try {
         const snapshot = await this.readSnapshot(file);
-        if (!isOptedIn(snapshot.frontmatter, this.getSettings())) { skipped += 1; continue; }
+        if (!isOptedIn(snapshot.frontmatter, this.getSettings())) {
+          skipped += 1;
+          continue;
+        }
         const result = await this.syncFile(file, false);
         if (result.direction === "skipped") skipped += 1;
         else synced += 1;
-      } catch { failed += 1; }
+      } catch {
+        failed += 1;
+      }
     }
     const message = `Notion Sync: ${synced} checked, ${failed} failed, ${skipped} not opted in`;
     this.setStatus(message, failed > 0);

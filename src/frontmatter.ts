@@ -11,7 +11,7 @@ export function splitFrontmatter(markdown: string): { frontmatter: Record<string
   if (!match) return { frontmatter: {}, body: markdown };
   const parsed = parseYaml(match[1] ?? "");
   return {
-    frontmatter: parsed && typeof parsed === "object" ? parsed as Record<string, unknown> : {},
+    frontmatter: parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {},
     body: markdown.slice(match[0].length)
   };
 }
@@ -40,11 +40,7 @@ export function snapshotHash(
   return contentHash({ title, body: body.trimEnd(), properties: selectedFrontmatter(frontmatter, settings) });
 }
 
-export function makeSnapshot(
-  file: NoteSnapshot["file"],
-  markdown: string,
-  settings: NotionSyncSettings
-): NoteSnapshot {
+export function makeSnapshot(file: NoteSnapshot["file"], markdown: string, settings: NotionSyncSettings): NoteSnapshot {
   const { frontmatter, body } = splitFrontmatter(markdown);
   return {
     file,

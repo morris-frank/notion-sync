@@ -17,9 +17,19 @@ const settings = {
 
 describe("schema-aware property mapping", () => {
   it("only pushes allowed keys that exist in the data source schema", () => {
-    expect(propertiesForPush("Field note", {
-      tags: ["soil", "trial"], status: "Draft", date: "2026-07-19", private: "never"
-    }, schemas, settings)).toMatchObject({
+    expect(
+      propertiesForPush(
+        "Field note",
+        {
+          tags: ["soil", "trial"],
+          status: "Draft",
+          date: "2026-07-19",
+          private: "never"
+        },
+        schemas,
+        settings
+      )
+    ).toMatchObject({
       Name: { title: expect.any(Array) },
       Tags: { multi_select: [{ name: "soil" }, { name: "trial" }] },
       Status: { status: { name: "Draft" } },
@@ -29,7 +39,8 @@ describe("schema-aware property mapping", () => {
 
   it("pulls mapped values back to their Obsidian keys", () => {
     const page = {
-      id: "page", last_edited_time: "2026-07-19T10:00:00Z",
+      id: "page",
+      last_edited_time: "2026-07-19T10:00:00Z",
       properties: {
         Tags: { type: "multi_select", multi_select: [{ name: "soil" }] },
         Status: { type: "status", status: { name: "Ready" } },
