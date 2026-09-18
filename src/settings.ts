@@ -1,5 +1,5 @@
 import type { App } from "obsidian";
-import { PluginSettingTab, Setting } from "obsidian";
+import { Notice, PluginSettingTab, Setting } from "obsidian";
 import type NotionSyncPlugin from "./main";
 
 export class NotionSyncSettingTab extends PluginSettingTab {
@@ -116,8 +116,9 @@ export class NotionSyncSettingTab extends PluginSettingTab {
         try {
           await this.plugin.testConnection();
           button.setButtonText("Connected");
-        } catch {
+        } catch (error) {
           button.setButtonText("Failed");
+          new Notice(`Notion Sync: ${error instanceof Error ? error.message : String(error)}`, 10000);
         } finally {
           window.setTimeout(() => button.setDisabled(false).setButtonText("Test"), 2000);
         }
