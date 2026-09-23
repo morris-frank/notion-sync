@@ -1,12 +1,26 @@
-<img align="right" width="96" alt="" src="https://raw.githubusercontent.com/morris-frank/maurice-frank.com/main/brand/icon/icon-obsidian-notion-sync-128.png">
+<img src="brand/icon/icon-notion-sync-on-obsidian-512.png" align="left" width="128" hspace="16" alt="notion-sync icon">
 
-# Notion Sync for Obsidian
+<h3>notion-sync</h3>
 
-An intentionally opinionated two-way sync between Obsidian notes and one fixed Notion data source. Obsidian always creates the relationship: no Notion page is imported unless a local note opted in and already holds its page ID.
+<p>
+  <sub>OBSIDIAN OWNS THE NOTE, NOTION GETS A COPY</sub>
+  <br>
+  <strong>Opinionated two-way sync between opted-in Obsidian notes and one Notion data source.</strong>
+  <br>
+  <br>
+  <img src="https://img.shields.io/badge/Obsidian-1.5%2B-8EDE3D?style=flat-square&amp;labelColor=16211B" alt="Obsidian 1.5+">
+  <img src="https://img.shields.io/badge/Notion%20API-2026--03--11-8EDE3D?style=flat-square&amp;labelColor=16211B" alt="Notion API 2026-03-11">
+  <img src="https://img.shields.io/badge/desktop%20%2B%20mobile-1AB172?style=flat-square&amp;labelColor=16211B" alt="Desktop and mobile">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1AB172?style=flat-square&amp;labelColor=16211B" alt="MIT license"></a>
+</p>
+
+<br clear="left">
+
+Obsidian always creates the relationship: no Notion page is imported unless a local note opted in and already holds its page ID. Mapping is deliberately limited, and anything it cannot represent stops the sync instead of silently losing content.
 
 ## Install
 
-Download `main.js`, `manifest.json`, and `styles.css` from the latest [GitHub release](https://github.com/morris-frank/obsidian-notion-sync/releases) into `<vault>/.obsidian/plugins/notion-sync/`, or add `morris-frank/obsidian-notion-sync` in [BRAT](https://github.com/TfTHacker/obsidian42-brat). Then enable **Notion Sync** under Community plugins.
+Download `main.js`, `manifest.json`, and `styles.css` from the latest [GitHub release](https://github.com/morris-frank/notion-sync/releases) into `<vault>/.obsidian/plugins/notion-sync/`, or add `morris-frank/notion-sync` in [BRAT](https://github.com/TfTHacker/obsidian42-brat). Then enable **Notion Sync** under Community plugins.
 
 ## Release
 
