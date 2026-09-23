@@ -1,6 +1,13 @@
 {
-  "name": "obsidian-notion-sync",
+  "name": "notion-sync",
   "version": "0.1.0",
+  "description": "Opinionated two-way sync from opted-in notes to one Notion data source.",
+  "author": "Maurice Frank",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/morris-frank/obsidian-notion-sync.git"
+  },
   "private": true,
   "packageManager": "pnpm@10.34.5",
   "scripts": {

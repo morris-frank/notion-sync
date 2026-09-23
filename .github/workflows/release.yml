@@ -1,0 +1,33 @@
+name: Release
+
+# Push a tag equal to manifest.json's version (e.g. 0.1.0, no "v" prefix) to publish.
+on:
+  push:
+    tags: ["*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: jdx/mise-action@v2
+        with:
+          cache: true
+
+      - name: Install dependencies (frozen)
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches manifest version
+        run: test "$(node -p 'require("./manifest.json").version')" = "$GITHUB_REF_NAME"
+
+      - name: Check
+        run: mise run check
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" main.js manifest.json styles.css

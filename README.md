@@ -2,6 +2,14 @@
 
 An intentionally opinionated two-way sync between Obsidian notes and one fixed Notion data source. Obsidian always creates the relationship: no Notion page is imported unless a local note opted in and already holds its page ID.
 
+## Install
+
+Download `main.js`, `manifest.json`, and `styles.css` from the latest [GitHub release](https://github.com/morris-frank/obsidian-notion-sync/releases) into `<vault>/.obsidian/plugins/notion-sync/`, or add `morris-frank/obsidian-notion-sync` in [BRAT](https://github.com/TfTHacker/obsidian42-brat). Then enable **Notion Sync** under Community plugins.
+
+## Release
+
+Bump `version` in `manifest.json` and `package.json`, add the version to `versions.json`, commit, then push a matching tag without a `v` prefix (`git tag 0.1.0 && git push origin 0.1.0`). CI checks the build and creates a draft GitHub release with the plugin files; publish it once reviewed.
+
 ## Install for development
 
 ```bash
@@ -10,7 +18,7 @@ mise run setup
 
 This installs the locked Node/pnpm toolchain and dependencies, installs commit and pre-push hooks, and runs the complete repository gate. Later, use `mise run check`; focused tasks include `mise run lint`, `fmt`, `typecheck`, `test`, and `build`.
 
-Copy or symlink this directory into `<vault>/.obsidian/plugins/obsidian-notion-sync`, then enable **Notion Sync** under Community plugins. `pnpm run dev` watches and rebuilds `main.js`.
+Copy or symlink this directory into `<vault>/.obsidian/plugins/notion-sync`, then enable **Notion Sync** under Community plugins. `pnpm run dev` watches and rebuilds `main.js`.
 
 Create a Notion integration with read, insert, and update content capabilities. Share the database containing the data source with it. In the plugin settings, enter the integration token and the data source ID (not the database container ID).
 
