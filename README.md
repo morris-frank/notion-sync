@@ -8,11 +8,11 @@
   <strong>Opinionated two-way sync between opted-in Obsidian notes and one Notion data source.</strong>
   <br>
   <br>
-  <a href="https://github.com/morris-frank/notion-sync/releases/latest"><img src="https://img.shields.io/github/v/release/morris-frank/notion-sync?style=flat-square&amp;color=8EDE3D&amp;labelColor=16211B" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/Obsidian-1.5%2B-8EDE3D?style=flat-square&amp;labelColor=16211B" alt="Obsidian 1.5+">
-  <img src="https://img.shields.io/badge/Notion%20API-2026--03--11-8EDE3D?style=flat-square&amp;labelColor=16211B" alt="Notion API 2026-03-11">
-  <img src="https://img.shields.io/badge/desktop%20%2B%20mobile-1AB172?style=flat-square&amp;labelColor=16211B" alt="Desktop and mobile">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1AB172?style=flat-square&amp;labelColor=16211B" alt="MIT license"></a>
+  <a href="https://github.com/morris-frank/notion-sync/releases/latest"><img src="https://img.shields.io/github/v/release/morris-frank/notion-sync?style=flat-square&amp;color=D78A7A&amp;labelColor=2D2825" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/Obsidian-1.5%2B-D78A7A?style=flat-square&amp;labelColor=2D2825" alt="Obsidian 1.5+">
+  <img src="https://img.shields.io/badge/Notion%20API-2026--03--11-D78A7A?style=flat-square&amp;labelColor=2D2825" alt="Notion API 2026-03-11">
+  <img src="https://img.shields.io/badge/desktop%20%2B%20mobile-7E9688?style=flat-square&amp;labelColor=2D2825" alt="Desktop and mobile">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-7E9688?style=flat-square&amp;labelColor=2D2825" alt="MIT license"></a>
 </p>
 
 <br clear="left">
