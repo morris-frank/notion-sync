@@ -1,3 +1,5 @@
+<img align="right" width="96" alt="" src="https://raw.githubusercontent.com/morris-frank/maurice-frank.com/main/brand/icon/icon-obsidian-notion-sync-128.png">
+
 # Notion Sync for Obsidian
 
 An intentionally opinionated two-way sync between Obsidian notes and one fixed Notion data source. Obsidian always creates the relationship: no Notion page is imported unless a local note opted in and already holds its page ID.
