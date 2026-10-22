@@ -32,16 +32,16 @@ url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8
 url_api = "https://api.github.com/repos/gitleaks/gitleaks/releases/assets/378332059"
 
 [[tools.node]]
-version = "26.3.1"
+version = "26.12.1"
 backend = "core:node"
 
 [tools.node."platforms.linux-x64"]
-checksum = "sha256:e892cd615e637edebcf22f9653d80fba63167ad6754d20881fd52cc37be81441"
-url = "https://nodejs.org/dist/v26.3.1/node-v26.3.1-linux-x64.tar.gz"
+checksum = "sha256:0fd1eb7770598f52a21995edf6ed35fc690400fa437c2386af329519e9143132"
+url = "https://nodejs.org/dist/v26.12.1/node-v26.12.1-linux-x64.tar.gz"
 
 [tools.node."platforms.macos-arm64"]
-checksum = "sha256:3f624ab0d774553c0d28b968e141d8c676a35a2811fb0b7b356ba9cbdce15f74"
-url = "https://nodejs.org/dist/v26.3.1/node-v26.3.1-darwin-arm64.tar.gz"
+checksum = "sha256:1901d539912c02afa10d1cc126943a8855a7eedebe830119463470db5e6c59e8"
+url = "https://nodejs.org/dist/v26.12.1/node-v26.12.1-darwin-arm64.tar.gz"
 
 [[tools.pnpm]]
 version = "10.34.5"
@@ -62,9 +62,9 @@ version = "0.4.5"
 backend = "aqua:j178/prek"
 
 [tools.prek."platforms.linux-x64"]
-checksum = "sha256:94698d1cd74e7b462a017257efeab6f46142f4fb3da9a1314f06c1d55c26d614"
-url = "https://github.com/j178/prek/releases/download/v0.4.5/prek-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/j178/prek/releases/assets/448118300"
+checksum = "sha256:dc86e18e532516dd629ee621ab76bc4c4761052219b27e3af1e47cbf9a71a270"
+url = "https://github.com/j178/prek/releases/download/v0.4.5/prek-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/j178/prek/releases/assets/448118296"
 provenance = "github-attestations"
 
 [tools.prek."platforms.macos-arm64"]
